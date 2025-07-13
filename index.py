@@ -79,10 +79,14 @@ if not df.empty:
 
     if graph_type == 'Bar':
         # Multicolour bar graph with date + weight inside bars
-        fig = go.Figure()
 
         # Combine Date + Weight text
         combined_text = df['Date'] + " | " + df['Weight'].astype(str) + " kg"
+
+        # Dynamically adjust graph height based on number of entries
+        graph_height = max(500, len(df)*80)  # 80px per bar, minimum 500px
+
+        fig = go.Figure()
 
         fig.add_trace(go.Bar(
             x=df['S.No'].astype(str),  # serial number as x-axis
@@ -93,6 +97,7 @@ if not df.empty:
             marker_color=colors[:len(df)],
             textfont=dict(color="white", size=12, family="Arial Black"),
             hovertemplate='S.No: %{x}<br>Date: %{text}<br>Weight: %{y} kg<extra></extra>',
+            width=0.5,  # fixed bar thickness
         ))
 
         fig.update_layout(
@@ -105,11 +110,20 @@ if not df.empty:
             uniformtext_minsize=8,
             uniformtext_mode='show',
             showlegend=False,
-            width=800,
-            height=500
+            width=400,  # optimal for mobile view
+            height=graph_height
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        # Use st.container with scrollable style
+        with st.container():
+            st.markdown(
+                f"""
+                <div style="overflow-y: scroll; height:{min(graph_height, 600)}px;">
+                """,
+                unsafe_allow_html=True
+            )
+            st.plotly_chart(fig, use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
     elif graph_type == 'Line':
         fig = px.line(
