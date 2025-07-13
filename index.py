@@ -28,26 +28,39 @@ st.dataframe(df[['S.No', 'Date', 'Weight']], use_container_width=True)
 
 # Add new entry
 st.write("### ➕ Add New Entry")
+if 'add_clicked' not in st.session_state:
+    st.session_state['add_clicked'] = False
+
 date = st.date_input("Select Date")
 weight = st.number_input("Enter Weight (kg)", min_value=0.0, max_value=120.0, step=0.1)
-if st.button("Add"):
+add_button = st.button("Add")
+
+if add_button:
     new_data = pd.DataFrame({'Date': [str(date)], 'Weight': [weight]})
     df = pd.concat([df.drop('S.No', axis=1), new_data], ignore_index=True)
     df['S.No'] = range(1, len(df) + 1)
     df.to_csv(file_path, index=False)
+    st.session_state['add_clicked'] = True
     st.success(f"Added: {date}, {weight} kg")
-    st.experimental_rerun()
+
+if st.session_state['add_clicked']:
+    df = pd.read_csv(file_path)
+    df['S.No'] = range(1, len(df) + 1)
+    st.session_state['add_clicked'] = False
 
 # Delete entry
 st.write("### ❌ Delete Entry")
 if not df.empty:
     delete_index = st.selectbox("Select entry to delete (by S.No)", df['S.No'])
-    if st.button("Delete"):
+    delete_button = st.button("Delete")
+    if delete_button:
         df = df[df['S.No'] != delete_index].reset_index(drop=True)
         df['S.No'] = range(1, len(df) + 1)
         df.to_csv(file_path, index=False)
         st.success("Deleted entry successfully")
-        st.experimental_rerun()
+        # Reload data
+        df = pd.read_csv(file_path)
+        df['S.No'] = range(1, len(df) + 1)
 else:
     st.info("No data available to delete.")
 
