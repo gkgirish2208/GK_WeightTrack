@@ -19,18 +19,17 @@ if not st.session_state['logged_in']:
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
 
-    if st.button("Login"):
+    login_button = st.button("Login")
+
+    if login_button:
         if username == "gkgirish" and password == "gkgirish2208":
             st.session_state['logged_in'] = True
-            st.success("Login successful!")
-            st.experimental_rerun()  # 🔥 force rerun to load app
+            st.success("Login successful! Please wait...")
         else:
             st.error("Invalid username or password. Please try again.")
 
-
-else:
-    # ----- MAIN APP -----
-
+# ----- MAIN APP -----
+if st.session_state['logged_in']:
     st.title("🏋️‍♂️ My Weight Tracker")
 
     # File path
