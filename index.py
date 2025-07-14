@@ -5,7 +5,7 @@ import plotly.express as px
 import os
 
 # Set page config
-st.set_page_config(page_title="My Weight Tracker", layout="centered")
+st.set_page_config(page_title="My Weight Tracker", layout="wide")
 
 st.title("🏋️‍♂️ My Weight Tracker")
 
@@ -19,7 +19,7 @@ else:
     df = pd.DataFrame(columns=['Date', 'Weight'])
     df.to_csv(file_path, index=False)
 
-# Add serial numbers
+# Add serial numbers without skipping (1,2,3,...)
 df['S.No'] = range(1, len(df) + 1)
 
 # Display existing data
@@ -83,9 +83,6 @@ if not df.empty:
         # Combine Date + Weight text
         combined_text = df['Date'] + " | " + df['Weight'].astype(str) + " kg"
 
-        # Dynamically adjust graph height based on number of entries
-        graph_height = max(500, len(df)*80)  # 80px per bar, minimum 500px
-
         fig = go.Figure()
 
         fig.add_trace(go.Bar(
@@ -95,9 +92,9 @@ if not df.empty:
             textposition='inside',
             insidetextanchor='middle',
             marker_color=colors[:len(df)],
-            textfont=dict(color="white", size=12, family="Arial Black"),
+            textfont=dict(color="white", size=10, family="Arial Black"),
             hovertemplate='S.No: %{x}<br>Date: %{text}<br>Weight: %{y} kg<extra></extra>',
-            width=0.5,  # fixed bar thickness
+            width=[0.5]*len(df),  # fixed width for each bar
         ))
 
         fig.update_layout(
@@ -110,20 +107,19 @@ if not df.empty:
             uniformtext_minsize=8,
             uniformtext_mode='show',
             showlegend=False,
-            width=400,  # optimal for mobile view
-            height=graph_height
+            height=400,  # compact height for neat look
+            width= max(400, len(df)*50),  # dynamic width for horizontal scroll
         )
 
-        # Use st.container with scrollable style
-        with st.container():
-            st.markdown(
-                f"""
-                <div style="overflow-y: scroll; height:{min(graph_height, 600)}px;">
-                """,
-                unsafe_allow_html=True
-            )
-            st.plotly_chart(fig, use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True)
+        # Embed in scrollable container
+        st.markdown(
+            """
+            <div style="overflow-x: auto; white-space: nowrap;">
+            """,
+            unsafe_allow_html=True
+        )
+        st.plotly_chart(fig, use_container_width=False)
+        st.markdown("</div>", unsafe_allow_html=True)
 
     elif graph_type == 'Line':
         fig = px.line(
