@@ -1,8 +1,7 @@
 import streamlit as st
 import pandas as pd
-import plotly.graph_objects as go
-import plotly.express as px
 import os
+import random
 
 # Set page config
 st.set_page_config(page_title="My Weight Tracker", layout="wide")
@@ -12,7 +11,6 @@ if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
 
 # ----- LOGIN PAGE -----
-
 if not st.session_state['logged_in']:
     st.title("🔐 Login Required")
 
@@ -30,7 +28,7 @@ if not st.session_state['logged_in']:
 
 # ----- MAIN APP -----
 if st.session_state['logged_in']:
-    st.title("🏋️‍♂️ My Weight Tracker")
+    st.title("🏋️‍♂️ My Weight Tracker - Progress View")
 
     # File path
     file_path = "weight_data.csv"
@@ -87,101 +85,31 @@ if st.session_state['logged_in']:
     else:
         st.info("No data available to delete.")
 
-    # Graph type selection
-    st.write("### 📊 Select Graph Type")
-    graph_type = st.selectbox("Choose Graph Type", ['Bar', 'Line', 'Scatter'])
+    # ----- Progress bar visualization -----
+    st.write("### 📊 Weight Progress Bars")
 
-    # Define multicolour palette
-    colors = ['#FF6F61', '#6B5B95', '#88B04B', '#F7CAC9', '#92A8D1',
-              '#955251', '#B565A7', '#009B77', '#DD4124', '#45B8AC']
-    if len(df) > len(colors):
-        colors = colors * (len(df)//len(colors) + 1)
-
-    # Graph plotting
     if not df.empty:
+        # Define multi colours randomly for bars
+        colors = ['#FF6F61', '#6B5B95', '#88B04B', '#F7CAC9', '#92A8D1',
+                  '#955251', '#B565A7', '#009B77', '#DD4124', '#45B8AC']
 
-        if graph_type == 'Bar':
-            # Multicolour bar graph with date + weight inside bars
+        for index, row in df.iterrows():
+            s_no = row['S.No']
+            date = row['Date']
+            weight = row['Weight']
+            percent = (weight / 120)  # Normalize to 0-1 scale
 
-            # Combine Date + Weight text
-            combined_text = df['Date'] + " | " + df['Weight'].astype(str) + " kg"
+            # Random colour selection for fun
+            bar_color = random.choice(colors)
 
-            fig = go.Figure()
-
-            fig.add_trace(go.Bar(
-                x=df['S.No'].astype(str),  # serial number as x-axis
-                y=df['Weight'],
-                text=combined_text,  # date + weight inside bar
-                textposition='inside',
-                insidetextanchor='middle',
-                marker_color=colors[:len(df)],
-                textfont=dict(color="white", size=10, family="Arial Black"),
-                hovertemplate='S.No: %{x}<br>Date: %{text}<br>Weight: %{y} kg<extra></extra>',
-                width=[0.5]*len(df),  # fixed width for each bar
-            ))
-
-            fig.update_layout(
-                title="Weight Records Progression (S.No vs Weight)",
-                xaxis_title="Serial Number",
-                yaxis_title="Weight (kg)",
-                yaxis=dict(range=[0,120]),
-                plot_bgcolor='white',
-                bargap=0.05,
-                uniformtext_minsize=8,
-                uniformtext_mode='show',
-                showlegend=False,
-                height=400,  # compact height for neat look
-                width= max(400, len(df)*50),  # dynamic width for horizontal scroll
-            )
-
-            # Embed in scrollable container
-            st.markdown(
-                """
-                <div style="overflow-x: auto; white-space: nowrap;">
-                """,
-                unsafe_allow_html=True
-            )
-            st.plotly_chart(fig, use_container_width=False)
-            st.markdown("</div>", unsafe_allow_html=True)
-
-        elif graph_type == 'Line':
-            fig = px.line(
-                df,
-                x='S.No',
-                y='Weight',
-                markers=True,
-                text='Date',
-                title="Weight Progression (Line Graph)",
-                labels={"S.No": "Serial Number", "Weight": "Weight (kg)"}
-            )
-            fig.update_traces(textposition="top center")
-            fig.update_yaxes(range=[0,120])
-            fig.update_layout(
-                plot_bgcolor='white',
-                width=800,
-                height=500
-            )
-            st.plotly_chart(fig, use_container_width=True)
-
-        elif graph_type == 'Scatter':
-            fig = px.scatter(
-                df,
-                x='S.No',
-                y='Weight',
-                color='Weight',
-                size='Weight',
-                text='Date',
-                title="Weight Progression (Scatter Plot)",
-                labels={"S.No": "Serial Number", "Weight": "Weight (kg)"}
-            )
-            fig.update_traces(textposition='top center')
-            fig.update_yaxes(range=[0,120])
-            fig.update_layout(
-                plot_bgcolor='white',
-                width=800,
-                height=500
-            )
-            st.plotly_chart(fig, use_container_width=True)
-
+            # Custom HTML progress bar with label
+            st.markdown(f"""
+                <div style="margin-bottom:15px;">
+                    <b>S.No {s_no}</b>: {date} | {weight} kg
+                    <div style="background-color:lightgrey; border-radius:5px; width:100%; height:20px;">
+                        <div style="width:{percent*100}%; background-color:{bar_color}; height:20px; border-radius:5px;"></div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
     else:
-        st.info("Add data to view graph.")
+        st.info("Add data to view progress bars.")
